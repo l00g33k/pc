@@ -1,0 +1,66 @@
+set -x
+sudo service hostapd stop
+sudo service udhcpd stop
+
+sudo ip link set dev "wlan0" down
+sudo ip addr flush dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+sudo sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables --flush FORWARD
+sudo iptables -t nat -F
+sudo iptables-save 
+
+set +x
+
+
+RestartWifi()
+{
+loop=1
+
+retries9=100
+wait9=10
+
+retries=0
+wait=0
+
+while [ $loop -eq 1 ]; do
+    if ! sudo wpa_cli -i "wlan0" status | grep 'ip_address' >/dev/null 2>&1
+    then
+        #echo Wifi is not connected
+        # no wifi, sleep
+        wait=$(($wait+1))
+        if [ $wait -ge $wait9 ]; then
+            # timeout
+            if [ $retries -ge $retries9 ]; then
+                # tried too many times
+                loop=0
+                echo $retries:$wait: Wifi is **NEVER** connected
+            else
+                # try one more time
+                retries=$(($retries+1))
+                wait=$wait0
+                echo Kick wifi
+                set -vx
+                sudo wpa_cli terminate >/dev/null 2>&1
+                sleep 3
+                sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf >/dev/null 2>&1
+                set +vx
+            fi
+        else
+            echo $retries:$wait: sleep 1 sec
+            sleep 1
+        fi
+    else
+        # has wifi, done
+        loop=0
+        echo $retries:$wait: Wifi is connected
+    fi
+
+done
+}
+
+echo run RestartWifi
+RestartWifi

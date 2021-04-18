@@ -1,0 +1,18 @@
+alias tm=tmux
+alias tml='tmux ls && tmux list-clients'
+alias tma='tmux attach'
+alias tmd='tmux detach -t'
+alias ll='ls -la'
+alias e='exit'
+
+alias sshtw='ssh al@192.168.0.170 -p 60337'
+alias ktw='for pid in $(ps aux | grep -P "sshd:  *pi@" | sed "s/pi *//" | sed "s/ .*//"); do echo $pid; kill $pid; done'
+
+
+alias ww='cd ~/g/wikipland'
+alias l00='cd ~/g/wikipland && perl l00httpd.pl'
+alias llx='cd ~/g/l00xf'
+
+alias gitkk="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
+alias gits="git status"
+

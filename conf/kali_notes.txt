@@ -1,0 +1,7 @@
+1. Setup wifi
+2. settings -- Display: 1280 x 1024
+3. -- Power Manager -- System -- Laptop Lid closed: Switch off display
+4. -- Power Manager -- Display -- Switch off after 1 min. (never sleep, blank)
+5. -- Power Manager -- Security -- lock: never
+5. -- Power Manager -- Security -- lock screen going to sleep: unchecked
+

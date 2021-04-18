@@ -1,0 +1,10 @@
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+
+highlight DiffAdd    term=bold ctermfg=white ctermbg=Blue guibg=LightBlue
+highlight DiffChange term=bold ctermbg=225 guibg=LightMagenta
+highlight DiffDelete term=bold ctermfg=red ctermbg=159 gui=bold guifg=Blue guibg=LightCyan
+highlight DiffText   term=bold cterm=bold ctermfg=white ctermbg=red gui=bold guibg=Red
+

@@ -1,0 +1,21 @@
+set -x
+sudo wpa_cli terminate
+sudo ip addr flush "wlan0"
+sudo ip link set dev "wlan0" down
+sudo rm -r /var/run/wpa_supplicant
+
+sudo ip link set dev "wlan0" down
+sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo service hostapd stop
+sudo service hostapd start
+sudo service udhcpd stop
+sudo service udhcpd start
+
+sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+
+set +x

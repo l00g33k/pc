@@ -1,0 +1,81 @@
+# .bash_aliases
+
+# _whoami
+export WHOAMI='unknown'
+if [[ -f ~/_whoami ]]; then
+    export WHOAMI="$(cat ~/_whoami)"
+fi
+echo "WHOAMI from ~/_whoami is >$WHOAMI<"
+
+# source local tmuxcmd_local_.sh
+TMUXCMDS=""
+if [[ ! -z "${BASH_SOURCE[0]}" ]]; then
+    DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_$WHOAMI.sh"
+    if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
+    DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_local_.sh"
+    if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
+    DOTSH="$(dirname $(dirname ${BASH_SOURCE[0]}))/pc_mine/tmuxcmd_$WHOAMI.sh"
+    if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
+fi
+alias tmss="tmux new-session \; $TMUXCMDS select-window -t :1 \; select-pane -t 0"
+
+
+# for termux only because dos2unix on /sdcard doesn't work:
+function tdos { \
+  if [[ -d /data/data/com.termux/files/home/x ]]; then \
+    echo "dos2unix: $1" ; \
+    cp "$1" "/data/data/com.termux/files/home/x/$1" ; \
+    dos2unix "/data/data/com.termux/files/home/x/$1" ; \
+    ls -la "$1" "/data/data/com.termux/files/home/x/$1" ; \
+    cp "/data/data/com.termux/files/home/x/$1" "$1" ; \
+  fi ; \
+}
+
+#universal on any windows computer beyond mine
+
+alias   aa='alias | less -N'
+alias  gcd="pwd |  tee /dev/clipboard"
+alias gcdd="pwd | sed 's/\\//\\\\/g' | sed -E 's/\\\\cygdrive\\\\(.)(.+)/\\1:\\2/' | sed -E 's/^(.*)$/&\\r/' | tee /dev/clipboard"
+alias sshh='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+alias   tt='printf "\033k%s\033\\" $1'
+
+#universal on any computer beyond mine
+
+alias da='while true; do date -R ; sleep 1 ; done'
+if [[ "$(uname)" == "Linux" ]]; then
+    # Linux; sudo apt install xclip; restart tmux
+    alias dt='echo -n "$(date +'\''WAL - %Y/%m/%d %H:%M:%S %a'\'')" | xclip -sel clip'
+else
+    # Windows/Cygwin
+    alias dt='echo -n "$(date +'\''WAL - %Y/%m/%d %H:%M:%S %a'\'')" > /dev/clipboard'
+fi
+alias  ll='ls -la --color=never'
+alias  tm='tmux -u'
+alias tml='tmux ls && tmux list-clients'
+alias   t="tmux attach 2>&1 | grep 'no .*session' && echo no sessions, will create, Enter to continue && read && tmux -u"
+alias tma='tmux attach $@'
+alias tmd='tmux detach -t'
+alias  tt='printf "\033k%s\033\\" $1'
+alias   e='exit'
+
+
+
+
+# also real scripts: ugit  uhd  ukk  usm  ust
+alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit | head -n 15"
+alias gitkk="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
+alias gitk0="git log --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
+alias     ga="git add ."
+alias     gc="git commit -am "
+alias     gs="git status"
+alias   gits="git status"
+alias   gitr="git remote -v"
+
+if uname -a | grep -v -- -kali; then
+    # don't change PS1 on kali Linux
+    PS1='\[\033[01;32m\]222\[\e[1;31m\]++\[\e[1;33m\]@\[\e[1;35m\]$HOSTNAME\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+fi
+# add mc if mc
+PSOPT=''
+if [[ ! -z "$OS" ]]; then PSOPT='-p'; fi
+if ps $PSOPT $PPID | grep -iP 'mc$' | grep -P "^ *$PPID" ; then PS1="${PS1}mc $ "; fi
