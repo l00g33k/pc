@@ -14,7 +14,7 @@ if [[ ! -z "${BASH_SOURCE[0]}" ]]; then
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
     DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_local_.sh"
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
-    DOTSH="$(dirname $(dirname ${BASH_SOURCE[0]}))/pc_mine/tmuxcmd_$WHOAMI.sh"
+    DOTSH="$(dirname ${BASH_SOURCE[0]})/../pc_mine/tmuxcmd_$WHOAMI.sh"
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
 fi
 alias tmss="tmux new-session \; $TMUXCMDS select-window -t :1 \; select-pane -t 0"
