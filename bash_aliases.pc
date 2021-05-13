@@ -34,8 +34,12 @@ function tdos { \
 #universal on any windows computer beyond mine
 
 alias   aa='alias | less -N'
-alias  gcd="pwd |  tee /dev/clipboard"
-alias gcdd="pwd | sed 's/\\//\\\\/g' | sed -E 's/\\\\cygdrive\\\\(.)(.+)/\\1:\\2/' | sed -E 's/^(.*)$/&\\r/' | tee /dev/clipboard"
+if [[ "$(uname)" == "Linux" ]]; then
+    alias  gcd="echo -n \"$(pwd)\" | xclip -sel clip"
+else
+    alias  gcd="pwd |  tee /dev/clipboard"
+    alias gcdd="pwd | sed 's/\\//\\\\/g' | sed -E 's/\\\\cygdrive\\\\(.)(.+)/\\1:\\2/' | sed -E 's/^(.*)$/&\\r/' | tee /dev/clipboard"
+fi
 alias sshh='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 alias   tt='printf "\033k%s\033\\" $1'
 
