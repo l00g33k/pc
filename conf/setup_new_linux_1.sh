@@ -203,6 +203,7 @@ function install_tools() {
     which mc        || sudo apt install -y mc
     which git       || sudo apt install -y git
     which dos2unix  || sudo apt install -y dos2unix
+    which netstat   || sudo apt install -y net-tools
     set +vx
 
     fix__wait4user $LINENO
