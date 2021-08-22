@@ -66,7 +66,7 @@ alias   e='exit'
 
 
 # also real scripts: ugit  uhd  ukk  usm  ust
-alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit | head -n 15"
+alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit | head -n 7"
 alias gitkk="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
 alias gitk0="git log --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
 alias     ga="git add ."
