@@ -71,8 +71,8 @@ alias gitkk="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%C
 alias gitk0="git log --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
 alias     ga="git add ."
 alias     gc="git commit -am "
+alias     gd="git diff"
 alias     gs="git status"
-alias   gits="git status"
 alias   gitr="git remote -v"
 
 
