@@ -5,7 +5,7 @@ sudo ip link set dev "wlan0" down
 sudo rm -r /var/run/wpa_supplicant
 
 sudo ip link set dev "wlan0" down
-sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip a add 192.168.57.1/24 brd + dev "wlan0"
 sudo ip link set dev "wlan0" up
 
 sudo service hostapd stop

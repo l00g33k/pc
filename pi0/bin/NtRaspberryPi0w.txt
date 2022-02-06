@@ -1,0 +1,1256 @@
+
+* [[/ls.htm?find=Find&findtext=%5E%5C%3D%3D%3D&block=.&prefmt=on&path=$|List hidden ===]] - [[/dash.htm?path=$|Processed table]]
+
+%TOC%
+%DASHHIDE:ON%
+
+=Journal=
+==20210612 122348 pi0b ro rootfs==
+* How to make your Raspberry Pi file system read-only (Raspbian Stretch) | by Andreas Schallwig | Medium : https://medium.com/@andreas.schallwig/how-to-make-your-raspberry-pi-file-system-read-only-raspbian-stretch-80c0f7be7353
+* Make your Raspberry Pi file system read-only (Raspbian Buster) https://medium.com/swlh/make-your-raspberry-pi-file-system-read-only-raspbian-buster-c558694de79
+* I have:
+
+    $ cat /etc/os-release
+    PRETTY_NAME="Raspbian GNU/Linux 9 (stretch)"
+    NAME="Raspbian GNU/Linux"
+    VERSION_ID="9"
+    VERSION="9 (stretch)"
+    VERSION_CODENAME=stretch
+    ID=raspbian
+    ID_LIKE=debian
+    HOME_URL="http://www.raspbian.org/"
+    SUPPORT_URL="http://www.raspbian.org/RaspbianForums"
+    BUG_REPORT_URL="http://www.raspbian.org/RaspbianBugs"
+
+* (useful management) switch ro vs rw
+
+    sudo mount -o remount,ro /
+    sudo mount -o remount,ro /boot
+    sudo mount -o remount,rw /
+    sudo mount -o remount,rw /boot
+
+* remove extra:
+
+    #$ sudo apt-get remove --purge wolfram-engine triggerhappy anacron logrotate dphys-swapfile xserver-common lightdm
+    sudo apt-get remove --purge wolfram-engine
+    sudo apt-get autoremove --purge
+
+* Remove some startup scripts
+
+    sudo systemctl disable bootlogs
+    # sudo systemctl disable console-setup
+
+* Replace your log manager:
+We want to avoid writing any system log files to the SD Card. 
+Therefore we will remove the standard syslog output of log files to 
+/var/log and instead replace it with the busybox in-memory logger:
+
+    sudo apt-get install busybox-syslogd
+    sudo dpkg --purge rsyslog
+
+* Disable swap and filesystem check and set it to read-only
+Edit the file /boot/cmdline.txt and add the following three words at the end of the line: fastboot noswap ro
+
+    vim /boot/cmdline.txt
+   #dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait modules-load=dwc2,g_ether splash plymouth.ignore-serial-consoles quiet
+    dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait modules-load=dwc2,g_ether splash plymouth.ignore-serial-consoles quiet fastboot noswap ro
+
+* Move some system files to temp filesystem
+
+    sudo rm -rf /var/lib/dhcp /var/lib/dhcpcd5 /var/run /var/spool /var/lock /etc/resolv.conf
+    sudo ln -s /tmp /var/lib/dhcp
+    sudo ln -s /tmp /var/lib/dhcpcd5
+    sudo ln -s /tmp /var/run
+    sudo ln -s /tmp /var/spool
+    sudo ln -s /tmp /var/lock
+    sudo touch /tmp/dhcpcd.resolv.conf
+    sudo ln -s /tmp/dhcpcd.resolv.conf /etc/resolv.conf
+
+* Move some lock files
+Edit the file 
+sudo vim /etc/systemd/system/dhcpcd5
+and change the line:
+
+    PIDFile=/run/dhcpcd.pid
+
+    to:
+
+    PIDFile=/var/run/dhcpcd.pid
+
+* Update the systemd random seed
+Link the random-seed file to the tmpfs location:
+
+    sudo rm /var/lib/systemd/random-seed
+    sudo ln -s /tmp/random-seed /var/lib/systemd/random-seed
+
+* Edit the service configuration file 
+sudo vim /lib/systemd/system/systemd-random-seed.service
+to have the file created on boot. Add the line 
+ExecStartPre=/bin/echo "" >/tmp/random-seed
+under the [Service] section.
+
+** Example:
+
+    [Service]Type=oneshot
+    RemainAfterExit=yes
+    ExecStartPre=/bin/echo "" >/tmp/random-seed
+    ExecStart=/lib/systemd/systemd-random-seed load
+    ExecStop=/lib/systemd/systemd-random-seed save
+
+* Finally reload the systemd service:
+
+    sudo systemctl daemon-reload
+
+* Make the file-systems read-only
+Update the file 
+sudo vim /etc/fstab
+and add the ,ro flag to all block devices
+Example:
+
+    proc            /proc           proc    defaults             0       0
+    /dev/mmcblk0p1  /boot           vfat    defaults,ro          0       2
+    /dev/mmcblk0p2  /               ext4    defaults,noatime,ro  0       1
+
+* Add the entries for the temporary file system at the end of the file:
+
+    tmpfs           /tmp            tmpfs   nosuid,nodev         0       0
+    tmpfs           /var/log        tmpfs   nosuid,nodev         0       0
+    tmpfs           /var/tmp        tmpfs   nosuid,nodev         0       0
+
+==20210315 004809 USB Ethernet gadget==
+* Raspberry Pi Zero -- Programming over USB! (Part 2)  Andrew's blog : https://blog.gbaman.info/?p=791
+* 1. Flash Raspbian Jessie full or Raspbian Jessie Lite onto the SD card.
+* 2. Once Raspbian is flashed, open up the boot partition (in Windows Explorer, Finder etc) 
+and add to the bottom of the config.txt file dtoverlay=dwc2 on a new line, then save the file.
+** add
+    sudo vim /boot/config.txt
+
+    # Uncomment this to enable the lirc-rpi module
+    #dtoverlay=lirc-rpi
+    # 1315 -- l00g33k
+    dtoverlay=dwc2
+
+* 3. If using a recent release of Jessie (Dec 2016 onwards), then create a new file simply 
+called ssh in the SD card as well. By default SSH is now disabled so this is required to 
+enable it. Remember - Make sure your file doesn't have an extension (like .txt etc)!
+* 4. Finally, open up the cmdline.txt. Be careful with this file, it is very picky with its 
+formatting! Each parameter is seperated by a single space (it does not use newlines). Insert 
+modules-load=dwc2,g_ether after rootwait. To compare, an edited version of the cmdline.txt 
+file at the time of writing, can be found here.
+** edit
+
+    sudo vim /boot/cmdline.txt
+
+    # was
+    dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait splash plymouth.ignore-serial-consoles quiet
+    # new
+    dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait modules-load=dwc2,g_ether splash plymouth.ignore-serial-consoles quiet
+
+* 5. That's it, eject the SD card from your computer, put it in your Raspberry Pi Zero and 
+connect it via USB to your computer. It will take up to 90s to boot up (shorter on subsequent 
+boots). It should then appear as a USB Ethernet device. You can SSH into it using raspberrypi.local as the address.
+
+==20201111 144240 Reflashing noobs==
+* Use rufus to erase existing sdcard partition
+* Unzip NOOBS_v2_8_1.zip
+* copy all files to sdcard, putting bootcode.bin, etc. at the root directory
+* boot and follow instructions
+==blog==
+20190318 001332 Install pi0w NOOB: unzip to FAT, boot, following instr; set US language, keyboard, location, connect wifi
+20170718 190343 cat /var/log/syslog Raspberry Pi • View topic - install DHCP server problem : https://www.raspberrypi.org/forums/viewtopic.php?f=63&t=34503 : null :: action / type android.intent.action.SEND text/plain null all fail
+20170701 135215 Setting up an Apache Web Server on a Raspberry Pi https://www.raspberrypi.org/documentation/remote-access/web-server/apache.md
+20170701 135206 https://www.raspberrypi.org/learning/lamp-web-server-with-wordpress/worksheet/
+20170701 135154 https://www.raspberrypi.org/learning/lamp-web-server-with-wordpress/
+20170701 135144 Tutorial – Install Apache, PHP and MySQL on a Raspberry Pi 2 https://www.stewright.me/2015/08/tutorial-install-apache-php-and-mysql-on-a-raspberry-pi-2/
+20170514 232942 Screen cast or Mirror to Raspberry Pi 2016 https://www.raspberrypi.org/forums/viewtopic.php?f=63&t=157734
+20170514 232928 PiCast: The open source, Raspberry Pi Chromecast alternative https://www.geek.com/android/picast-the-open-source-raspberry-pi-chromecast-alternative-1564550/
+20170514 232912 How to cast to Raspberry Pi using Raspicast https://codeyarns.com/2016/09/09/how-to-cast-to-raspberry-pi-using-raspicast/
+20170426 000317 Raspberry Pi Downloads - Software for the Raspberry Pi : https://www.raspberrypi.org/downloads/ : null :: action / type android.intent.action.SEND text/plain null all fail
+20170426 000251 Updating and Upgrading Raspbian - Raspberry Pi Documentation : https://www.raspberrypi.org/documentation/raspbian/updating.md : null :: action / type android.intent.action.SEND text/plain null all fail
+==20200214 151829 update pi0b==
+sudo apt update
+sudo apt full-upgrade
+sudo apt list --upgradable | less -N
+sudo reboot
+
+sudo apt-get install --only-upgrade apt
+
+** won't do because it wants to do all a once
+
+    332 upgraded, 28 newly installed, 0 to remove and 0 not upgraded.
+    Need to get 933 MB of archives.
+    After this operation, 548 MB of additional disk space will be used.
+    E: You don't have enough free space in /var/cache/apt/archives/.
+
+* manually list.txt:
+
+    sudo apt-get install --only-upgrade apt
+    # apt
+    sudo apt-get install --only-upgrade apt-transport-https
+    sudo apt-get install --only-upgrade apt-utils
+    sudo apt-get install --only-upgrade base-files
+
+** made D:\x\xdel_after_1month\list.txt
+
+    ssh pi@192.168.97.119 'cat /tmp/list.txt' > list.txt
+    tar zc list.txt | ssh pi@192.168.97.119 'cd /tmp && tar zx'
+
+    . /tmp/list.txt
+
+
+
+==20190911 000130 pi0b on guest wifi==
+* setup public key only
+
+    #Port 22
+    #2.y910
+    Port 48625
+
+    #PasswordAuthentication yes
+    #2.y910
+    PasswordAuthentication no
+
+* port forwards:
+
+    34401 to 1.13
+    50261 to 1.13
+
+==20190706 230604 fswebcam==
+* l00_fswebcam.pl :
+
+    print $sock "Taking picture...<p>\n";
+    `cd /home/pi/x && fswebcam cam.jpg`;
+    print $sock "<a href =\"/ls.htm?path=/home/pi/x/cam.jpg\"><img src=\"/ls.htm?path=/home/pi/x/cam.jpg\" width=\"50%\"></a>";
+==20180621 201431 Node-RED==
+* https://nodered.org/docs/hardware/raspberrypi :
+bash <(curl -sL https://raw.githubusercontent.com/node-red/raspbian-deb-package/master/resources/update-nodejs-and-nodered)
+* to run:
+node-red-start
+** To stop Node-RED, run the command:
+node-red-stop.
+** To see the log, run the command:
+node-red-log
+** If you want Node-RED to run when the Pi boots up you can use:
+sudo systemctl enable nodered.service
+sudo systemctl disable nodered.service
+** GUI:
+http://192.168.1.100:1880/
+** nodes?
+cd ~/.node-red
+
+
+=LED=
+* https://www.raspberrypi.org/forums/viewtopic.php?t=12530
+
+    cat /sys/class/leds/led0/trigger
+    cat /sys/class/leds/led0/trigger > led0_trigger
+    cat led0_trigger
+
+    sudo -i
+    echo none > /sys/class/leds/led0/trigger
+    echo mmc0 > /sys/class/leds/led0/trigger
+    exit
+
+    echo 1 > /sys/class/leds/led0/brightness
+    echo 0 > /sys/class/leds/led0/brightness
+
+    while [[ 1 ]]; do echo 1 > /sys/class/leds/led0/brightness; sleep 0.1; echo 0 > /sys/class/leds/led0/brightness; sleep 0.1; done
+
+==led script==
+* Blinks at 1 Hz
+    sudo vim /usr/local/bin/led
+    sudo chmod 777 /usr/local/bin/led
+    echo none > /sys/class/leds/led0/trigger
+    while [[ 1 ]]
+    do 
+        echo 1 > /sys/class/leds/led0/brightness
+        sleep 0.1
+        echo 0 > /sys/class/leds/led0/brightness
+        sleep 0.1
+    done
+* Restore mmc0
+    sudo vim /usr/local/bin/ledoff
+    sudo chmod 777 /usr/local/bin/ledoff
+    echo mmc0 > /sys/class/leds/led0/trigger
+
+=Second setup=
+* 20180516 110905 v
+* enable sshd
+    sudo -i
+    echo ssh > /boot/ssh
+** defaults to
+    ID: pi
+    PW: raspberry
+** Change (sudo allows simple password):
+    sudo -i
+    passwd pi
+* add Wifi AP:
+    sudo vim /etc/wpa_supplicant/wpa_supplicant.conf
+    wpa_passphrase ssid passphrase
+
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+    update_config=1
+    country=GB
+
+    network={
+        ssid="cypresscypress"
+        psk=
+    }
+* Now connect using ssh
+* set new password (sudo allows any password)
+    sudo passwd pi
+    mds
+* update
+    sudo apt-get update
+* config and setup time zone
+    sudo raspi-config
+    Select Localisation Options
+    Select I1 Change Locale
+        unselect en_GB.UTF-8 UTF-8
+        en_US.UTF-8 UTF-8
+    Select I2 Change Timezone
+        US
+        Pacific Ocean
+* setup keyboard
+    sudo vim /etc/default/keyboard
+    XKBLAYOUT="us"
+* install useful CLI tools:
+    sudo apt-get install tmux
+    sudo apt-get install vim
+** configure tmux: vim ~/.tmux.conf
+    #al set -g mouse on
+    set -s escape-time 0
+
+    #al
+    #Make CTRL-a the default Command key
+    set -g prefix C-a
+
+    #This means CTRL-a CTRL-a switches to next window
+    bind-key C-a last-window
+
+    # Start numbering at 1
+    set -g base-index 1
+
+    #Set up some more rememberable split pane functions..
+    unbind %
+    bind | split-window -h
+    bind - split-window -v
+
+    # Set status bar
+    set -g status-bg black
+    set -g status-fg white
+    set -g status-left '[N6]'
+
+    # Highlight active window
+    set-window-option -g window-status-current-bg red
+
+    #Set the right side of status bar
+    set -g status-right "%X %a %x"
+
+    #Auto set window title
+    #setw -g automatic-rename
+    set -g automatic-rename
+
+* create alias: vim ~/.bash_aliases
+    alias e=exit
+    alias tm=tmux
+    alias tml='tmux ls && tmux list-clients'
+    alias tma='tmux attach'
+    alias tmd='tmux detach -t'
+    alias ll='ls -la'
+
+
+=Audio=
+* https://learn.adafruit.com/adding-basic-audio-ouput-to-raspberry-pi-zero?view=all
+** 
+gpio readall | grep -E 'Physical|\| 12 \||\| 35 \|'
+                                       || 12 | 0 | IN   | GPIO. 1 | 1   | 18
+    19 |  24 | GPIO.24 |   IN | 0 | 35 ||
+** build gpio_alt
+    wget -O gpio_alt.c https://learn.adafruit.com/pages/6577/elements/1960154/download
+    gcc -o gpio_alt gpio_alt.c
+    sudo chown root:root gpio_alt
+    sudo chmod u+s gpio_alt
+    sudo mv gpio_alt /usr/local/bin/
+
+    gpio_alt -p 13 -f 0
+gpio_alt -p 19 -f 5
+gpio_alt -p 18 -f 5
+** raspi-gpio
+sudo raspi-gpio get 18
+sudo raspi-gpio get 19
+** configure audio
+sudo raspi-config
+    Advanced Options
+    Audio
+    Force 3.5mm
+** play audio: 
+aplay /usr/share/sounds/alsa/Front_Center.wav
+
+aplay  /usr/share/sounds/alsa/Front_Center.wav
+aplay  /usr/share/sounds/alsa/Front_Left.wav
+aplay  /usr/share/sounds/alsa/Front_Right.wav
+aplay  /usr/share/sounds/alsa/Noise.wav
+aplay  /usr/share/sounds/alsa/Rear_Center.wav
+aplay  /usr/share/sounds/alsa/Rear_Left.wav
+aplay  /usr/share/sounds/alsa/Rear_Right.wav
+aplay  /usr/share/sounds/alsa/Side_Left.wav
+aplay  /usr/share/sounds/alsa/Side_Right.wav
+
+
+* 20171127 002610 ^
+=Auto WiFi Hotspot if no Internet=
+* 20170425 235729 Raspberry Connect - Raspberry PI 3 Auto WiFi Hotspot if no Internet : http://www.raspberryconnect.com/network/item/315-rpi3-auto-wifi-hotspot-if-no-internet : null :: action / type android.intent.action.SEND text/plain null all fail
+** My requirements are for when the pi is at home it connects to my home router or other known routers so it is available on the local network. If no router is found when it is started up then it will create a wifi hotspot, which is not rooted to the Internet, so i can SSH to the RPi from another device and control the camera and run other custom scripts
+** This article is not the latest version of the AutoHotspot script, two new versions are now available. For WiFi Network and automatically switching to direct access only Hotspot suitable for the Pi Zero W then use Raspeberry Pi - Auto WiFi Hotspot Switch - Direct Connection
+==Zero W==
+* REALLY WORKED
+** stop wifi client
+    sudo wpa_cli terminate
+    sudo ip addr flush "wlan0"
+    sudo ip link set dev "wlan0" down
+    sudo rm -r /var/run/wpa_supplicant
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+---
+
+** start wifi client
+    sudo service hostapd stop
+    sudo service udhcpd stop
+
+    sudo ip link set dev "wlan0" down
+    sudo ip addr flush dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+    sudo ifdown wlan0
+    sudo ifup wlan0
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sudo ifdown wlan0
+    sudo ifup wlan0
+    sudo wpa_cli terminate
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sleep 10
+    sudo ifdown wlan0
+    sudo ifup wlan0
+
+---
+
+            sudo wpa_cli -i "wlan0" status 
+            sudo wpa_cli -i "wlan0" status | grep 'ip_address'
+            sudo iw dev "wlan0" scan ap-force | egrep "^BSS|SSID:"
+
+
+        sudo service hostapd stop
+        sudo service hostapd start
+        sudo service udhcpd stop
+        sudo service udhcpd start
+
+            sudo systemctl stop hostapd
+            sudo systemctl stop dnsmasq
+
+
+*** install dnsmasq (not used)
+    sudo apt-get install dnsmasq
+    sudo systemctl disable dnsmasq
+    sudo vim /etc/dnsmasq.conf
+    #Go to the bottom of the file and add the following lines (download here)
+#AutoHotspot Config
+#stop DNSmasq from using resolv.conf
+no-resolv
+#Interface to use
+interface=wlan0
+bind-interfaces
+dhcp-range=192.168.47.100,192.168.47.120,12h
+
+* This works
+** start AP
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+
+
+
+        sudo wpa_cli terminate
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+** stop AP
+    sudo service hostapd stop
+    sudo service udhcpd stop
+
+    sudo ifdown wlan0
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+    sudo ifup wlan0
+
+
+
+
+
+    sudo ifconfig wlan0 dhcp
+
+    sudo wpa_cli terminate
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+
+
+
+---
+* http://www.raspberryconnect.com/network/item/331-raspberry-pi-auto-wifi-hotspot-switch-no-internet-routing
+* Can't follow partialy.
+* iw dev
+    sudo iw dev "wlan0" scan ap-force | egrep "^BSS|SSID:"
+* stop wifi client
+    sudo wpa_cli terminate
+    sudo ifdown wlan0
+
+    sudo wpa_cli terminate
+    sudo ip addr flush "wlan0"
+    sudo ip link set dev "wlan0" down
+    sudo rm -r /var/run/wpa_supplicant
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+    sudo ip link set dev "wlan0" down
+    sudo ip addr flush dev "wlan0"
+    sudo ip link set dev "wlan0" up
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sudo wpa_cli -i "wlan0" status | grep 'ip_address'
+
+
+* start wifi client
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+    sudo ifup wlan0
+
+    sudo wpa_cli -i "wlan0" status
+* start ap
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+        systemctl start dnsmasq
+        systemctl start hostapd
+
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+
+        sudo sh -c "iptables-save > /etc/iptables.ipv4.org"
+
+* stop ap
+    sudo service hostapd stop
+    sudo service udhcpd stop
+    sudo ifup wlan0
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 dhcp
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a replace 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+
+
+
+==Replicating on Pi3b==
+* 20190802 171338 
+
+sudo apt-get install hostapd udhcpd
+
+sudo vim /etc/hostapd/hostapd.conf
+
+interface=wlan0
+driver=nl80211
+ssid=YOUR_STATION
+hw_mode=g
+channel=11
+wpa=2
+wpa_passphrase=SECRETPASSWORD
+wpa_key_mgmt=WPA-PSK
+#wpa_pairwise=TKIP CCMP
+wpa_ptk_rekey=600
+macaddr_acl=0
+
+sudo vim /etc/default/hostapd
+
+#DAEMON_CONF=""
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+sudo vim /etc/dhcp/dhcpd.conf
+
+start 192.168.47.100 # This is the range of IPs that the hostspot will give to client devices.
+end 192.168.47.110
+interface wlan0 # The device uDHCP listens on.
+remaining yes
+#opt dns 8.8.8.8 4.2.2.2 # The DNS servers client devices will use.
+opt subnet 255.255.255.0
+#opt router 192.168.42.1 # The Pi's IP address on wlan0 which we will set up shortly.
+opt lease 864000 # 10 day DHCP lease time in seconds
+
+
+sudo wpa_cli terminate
+sudo ip addr flush "wlan0"
+sudo ip link set dev "wlan0" down
+sudo rm -r /var/run/wpa_supplicant
+
+sudo ip link set dev "wlan0" down
+sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo service hostapd stop
+sudo service hostapd start
+sudo service udhcpd stop
+sudo service udhcpd start
+
+sudo systemctl status hostapd
+sudo systemctl status udhcpd
+
+
+sudo service hostapd start
+sudo service hostapd stop
+sudo service hostapd status
+sudo service hostapd enable
+sudo systemctl unmask hostapd
+sudo systemctl status hostapd
+sudo systemctl start hostapd
+
+
+
+
+
+sudo service hostapd stop
+sudo service udhcpd stop
+sudo ip link set dev "wlan0" down
+sudo ip addr flush dev "wlan0"
+sudo ip link set dev "wlan0" up
+sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+sudo sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables --flush FORWARD
+sudo iptables -t nat -F
+sudo iptables-save 
+
+
+
+
+hot:
+sudo wpa_cli terminate
+sudo ip addr flush "wlan0"
+sudo ip link set dev "wlan0" down
+sudo rm -r /var/run/wpa_supplicant
+
+sudo ip link set dev "wlan0" down
+sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo service hostapd stop
+sudo service hostapd start
+sudo service udhcpd stop
+sudo service udhcpd start
+
+
+
+cold:
+
+sudo service hostapd stop
+sudo service udhcpd stop
+
+sudo ip link set dev "wlan0" down
+sudo ip addr flush dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+sudo sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables --flush FORWARD
+sudo iptables -t nat -F
+sudo iptables-save 
+
+
+
+    RestartWifi()
+    {
+    loop=1
+
+    retries9=30
+    wait9=10
+
+    retries=0
+    wait=0
+
+    while [ $loop -eq 1 ]; do
+        if ! sudo wpa_cli -i "wlan0" status | grep 'ip_address' >/dev/null 2>&1
+        then
+            #echo Wifi is not connected
+            # no wifi, sleep
+            wait=$(($wait+1))
+            if [ $wait -ge $wait9 ]; then
+                # timeout
+                if [ $retries -ge $retries9 ]; then
+                    # tried too many times
+                    loop=0
+                    echo $retries:$wait: Wifi is **NEVER** connected
+                else
+                    # try one more time
+                    retries=$(($retries+1))
+                    wait=$wait0
+                    echo Kick wifi
+                    set -vx
+                    sudo wpa_cli terminate >/dev/null 2>&1
+                    sleep 3
+                    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf >/dev/null 2>&1
+                    set +vx
+                fi
+            else
+                echo $retries:$wait: sleep 1 sec
+                sleep 1
+            fi
+        else
+            # has wifi, done
+            loop=0
+            echo $retries:$wait: Wifi is connected
+        fi
+
+    done
+    }
+
+    echo run RestartWifi
+    RestartWifi
+
+
+
+
+
+
+=Set time=
+* https://raspberrypi.stackexchange.com/questions/47542/raspberry-pi-wont-update-time
+** If you set the Time Zone in raspi-config the Raspberry Pi will automatically update the time on boot, if connected to the internet.
+    sudo raspi-config
+    Select Internationalisation Options
+    Select I2 Change Timezone
+    Select your Geographical Area
+    Select your nearest City
+    Select Finish
+    Select Yes to reboot now
+* Also mentioned, but not necessary?
+    sudo sntp -s time.google.com
+=Pi Zerow config=
+==Static IP==
+* here
+    sudo vim /etc/dhcpcd.conf
+    # append at end
+interface eth0
+static ip_address=192.168.0.31/24
+static routers=192.168.0.1
+static domain_name_servers=8.8.8.8
+
+* not here
+    sudo vim /etc/network/interfaces
+address 192.168.0.31
+netmask 255.255.255.0
+network 192.168.0.0
+broadcast 192.168.0.255
+gateway 192.168.0.1
+* ifconfig
+    inet addr:192.168.0.108  
+    Bcast:192.168.0.255  
+    Mask:255.255.255.0
+    eth0  Link encap:Ethernet  HWaddr 00:e0:00:00:44:56
+          inet addr:192.168.0.108  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::d278:828:bb43:d9fa/64 Scope:Link
+          inet6 addr: 2605:e000:3902:e400:a846:5d47:cf67:f6b6/64 Scope:Global
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:43368 errors:0 dropped:18775 overruns:0 frame:0
+          TX packets:6600 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:3149299 (3.0 MiB)  TX bytes:711037 (694.3 KiB)
+* https://www.raspberrypi.org/forums/viewtopic.php?f=28&t=159869
+* 20171118 231822 ^
+==HDMI==
+* sudo vim /boot/config.txt:
+    # uncomment if hdmi display is not detected and composite is being output
+    #hdmi_force_hotplug=1
+    hdmi_force_hotplug=1
+==Wifi==
+* add AP:
+    sudo vim /etc/wpa_supplicant/wpa_supplicant.conf
+    wpa_passphrase ssid passphrase
+
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+    update_config=1
+    country=GB
+
+    network={
+        ssid="cypresscypress"
+        psk=
+    }
+===Startup DHCP failure fix===
+* start up fix: https://www.raspberrypi.org/forums/viewtopic.php?f=28&t=60560
+    I added the following to /etc/rc.local
+    ifdown wlan0
+    ifup wlan0 
+    (another poster): In my case I added: 'auto wlan0'. Which solved my problem, thanks!
+=USB gadget=
+* Next we need to make sure we are using the dwc2 USB driver
+    echo "dtoverlay=dwc2" | sudo tee -a /boot/config.txt
+    sudo vim /boot/config.txt
+* And enable it in Raspbian
+    echo "dwc2" | sudo tee -a /etc/modules
+    sudo vim /etc/modules
+* Need to now pick which module you want to use from the list above, for example for ethernet
+    echo "g_ether" | sudo tee -a /etc/modules
+    sudo vim /etc/modules
+** Serial (g_serial)
+*** g_serial - To use the standard serial module, you need to tell the Pi to forward the serial console to it with 
+    sudo systemctl enable getty@ttyGS0.service
+** Ethernet (g_ether)
+** Mass storage (g_mass_storage)
+*** g_mass_storage - To have your Pi Zero appear as a mass storage device (flash drive), first create a mini filesystem in a file on your Pi with 
+    sudo dd if=/dev/zero of=/piusb.bin bs=512 count=2880
+and set it up as a fat32 filesystem with 
+    sudo mkdosfs /piusb.bin
+    sudo mount -t vfat /piusb.bin /mnt/mass
+    sudo mount -t vfat /piusb2.bin /mnt/mass
+Then, when enabling it, add file=/piusb.bin stall=0 onto the end, for example 
+    sudo modprobe g_mass_storage file=/piusb.bin removable=y stall=0
+    sudo modprobe g_mass_storage file=/piusb2.bin removable=y stall=0
+    sudo cat /sys/module/g_mass_storage/parameters/file
+    rmmod g_mass_storage
+**** Mass Storage Gadget (or MSG) acts as a USB Mass Storage device,
+appearing to the host as a disk or a CD-ROM drive.  It supports
+multiple logical units (LUNs).  Backing storage for each LUN is
+provided by a regular file or a block device, access can be limited
+to read-only, and gadget can indicate that it is removable and/or
+CD-ROM (the latter implies read-only access)
+http://elixir.free-electrons.com/linux/latest/source/Documentation/usb/mass-storage.txt
+***** file=filename[,filename...] ... at most FSG_MAX_LUNS (8) LUNs set ... *BEWARE* that if a file is used as a backing storage, it may not be modified by any other process
+***** removable=b[,b...] ... 'b' here is either 'y', 'Y' or '1' for true
+***** 
+***** 
+***** 
+** MIDI (g_midi)
+** Audio (g_audio)
+** Keyboard/Mouse (g_hid)
+** Mass storage and Serial (g_acm_ms)
+** Ethernet and Serial (g_cdc)
+** Multi (g_multi) - Allows you to configure 2 from Ethernet, Mass storage and Serial
+** In addition to the above modules, a few other (less useful) modules are included.
+** Webcam (g_webcam)
+** Printer (g_printer)
+** Gadget tester (g_zero)
+* You can only pick one of the above modules to use at a time.
+
+* ref:
+** 20170627 174210 Turning your Raspberry PI Zero into a USB Gadget https://learn.adafruit.com/turning-your-raspberry-pi-zero-into-a-usb-gadget?view=all
+** 20170627 135945 Using the Linux USB Gadget modules, we can get the Pi Zero to emulate a whole host of USB devices including ... Mass storage device – You can get the Pi Zero to appear as a flash drive, allowing you to for example, copy files over and have the Pi run these files (useful for robotics for example) http://pi.gbaman.info/?p=699  https://gist.github.com/gbaman/50b6cca61dd1c3f88f41
+==mass_storage gadget cmdline==
+* What has been exported?
+    sudo cat /sys/module/g_mass_storage/parameters/file
+* Start g_mass_storage
+    sudo modprobe g_mass_storage file=/piusb.bin removable=y stall=1
+    sudo modprobe g_mass_storage file=/piusb2.bin removable=y stall=1
+* Stop
+    rmmod g_mass_storage
+* Pi zero mount
+    mount -t vfat /piusb.bin /mnt/mass
+    umount /mnt/mass
+==USB Audio==
+* 20200214 143242 v
+* https://www.audiosciencereview.com/forum/index.php?threads/raspberry-pi-as-usb-to-i2s-adapter.8567/
+
+sudo modprobe g_audio c_srate=192000 c_ssize=4 p_srate=48000 p_ssize=2
+
+	sudo modprobe -r g_audio
+	sudo modprobe g_audio c_srate=96000 c_ssize=4 p_srate=96000 p_ssize=4
+
+arecord -l
+
+    udc-core: couldn't find an available UDC - added [g_audio] to list of pending drivers
+
+
+=Headless wifi=
+* 20170420 173456 Pi Zero W wifi issues on Raspbian in headless mode https://www.raspberrypi.org/forums/viewtopic.php?f=28&t=176147
+=Keyboard mouse=
+* Install xwit and xdotool:
+    sudo apt-get install xwit xdotool
+* insert into:
+    vim /home/pi/.config/openbox/lxde-pi-rc.xml
+** after the (keyboard) section: (section to be inserted at end of this section)
+* reboot 
+* control
+** alt-ctrl-keypad moves big step
+** alt-ctrl-shift-keypad moves small step
+** alt-ctrl-5: left click
+** alt-ctrl-0: right click
+** alt-ctrl-.: middle click
+* ref:
+** https://www.raspberrypi.org/forums/viewtopic.php?f=26&t=41187
+** https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=27857
+* section to be inserted ([[/view.htm?path=$|view]] to see XML tags)
+  <!-- https://www.raspberrypi.org/forums/viewtopic.php?f=26&t=41187 -->
+  <!-- https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=27857 -->
+  <!-- Control MOUSE via LXDE XWIT -->
+  <!-- Keybinding for MOUSE CONTROL RIGHT DOWN-->
+  <keybind key="C-A-KP_3">
+   <action name="Execute">
+         <command>xwit -root -rwarp 25 25</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL RIGHT UP-->
+  <keybind key="C-A-KP_9">
+   <action name="Execute">
+         <command>xwit -root -rwarp 25 -25</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL LEFT DOWN-->
+  <keybind key="C-A-KP_1">
+   <action name="Execute">
+         <command>xwit -root -rwarp -25 25</command>
+   </action>
+  </keybind>
+
+
+  <!-- Keybinding for MOUSE CONTROL LEFT UP-->
+  <keybind key="C-A-KP_7">
+   <action name="Execute">
+         <command>xwit -root -rwarp -25 -25</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL LEFT-->
+  <keybind key="C-A-KP_4">
+   <action name="Execute">
+         <command>xwit -root -rwarp -25 0</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL RIGHT-->
+  <keybind key="C-A-KP_6">
+   <action name="Execute">
+         <command>xwit -root -rwarp 25 0</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL UP-->
+  <keybind key="C-A-KP_8">
+   <action name="Execute">
+         <command>xwit -root -rwarp 0 -25</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL DOWN-->
+   
+  <keybind key="C-A-KP_2">
+   <action name="Execute">
+            <command>xwit -root -rwarp 0 25</command>
+   </action>
+  </keybind>
+
+<!-- Keybinding for MOUSE CONTROL RIGHT DOWN-->
+  <keybind key="S-C-A-KP_3">
+   <action name="Execute">
+         <command>xwit -root -rwarp 5 5</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL RIGHT UP-->
+  <keybind key="S-C-A-KP_9">
+   <action name="Execute">
+         <command>xwit -root -rwarp 5 -5</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL LEFT DOWN-->
+  <keybind key="S-C-A-KP_1">
+   <action name="Execute">
+         <command>xwit -root -rwarp -5 5</command>
+   </action>
+  </keybind>
+
+
+  <!-- Keybinding for MOUSE CONTROL LEFT UP-->
+  <keybind key="S-C-A-KP_7">
+   <action name="Execute">
+         <command>xwit -root -rwarp -5 -5</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL LEFT-->
+  <keybind key="S-C-A-KP_4">
+   <action name="Execute">
+         <command>xwit -root -rwarp -5 0</command>
+   </action>
+  </keybind>
+
+  <!-- Keybinding for MOUSE CONTROL RIGHT-->
+  <keybind key="S-C-A-KP_6">
+
+=Version info=
+* uname -a
+* cat /etc/os-release
+* cat /etc/rpi-issue
+* cat /sys/firmware/devicetree/base/model
+* 20170420 173456 Pi Zero W wifi issues on Raspbian in headless mode https://www.raspberrypi.org/forums/viewtopic.php?f=28&t=176147
+=Raspbian releases=
+* https://github.com/RPi-Distro/pi-gen/releases
+=ssh connection=
+* ssh pi@192.168.97.100
+** PW: p09o
+* ID: root
+** PW: p09o
+=Getting Started=
+==20170311 092108 installing==
+* apt-get install mc
+==20170311 092108 wifi hotspot/ap==???
+* Non-permanent setup:
+    #vim /usr/local/bin/hotspot
+    sudo ifdown wlan0
+    sudo ifconfig wlan 0 192.168.47.1
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+---
+* http://elinux.org/RPI-Wireless-Hotspot
+* install ap server
+    sudo apt-get install hostapd udhcpd
+* sudo vim /etc/dhcp/dhcpd.conf
+    start 192.168.47.100 # This is the range of IPs that the hostspot will give to client devices.
+    end 192.168.47.110
+    interface wlan0 # The device uDHCP listens on.
+    remaining yes
+    #opt dns 8.8.8.8 4.2.2.2 # The DNS servers client devices will use.
+    opt subnet 255.255.255.0
+    #opt router 192.168.42.1 # The Pi's IP address on wlan0 which we will set up shortly.
+    opt lease 864000 # 10 day DHCP lease time in seconds
+* sudo vim /etc/default/udhcpd
+    #DHCPD_ENABLED="no"
+    DHCPD_ENABLED="yes"
+* own address
+    sudo ifconfig wlan0 192.168.47.1
+** To set this up automatically on boot, edit the file /etc/network/interfaces and replace the line "iface wlan0 inet dhcp" to: 
+    iface wlan0 inet static
+      address 192.168.42.1
+      netmask 255.255.255.0
+* /etc/hostapd/hostapd.conf
+    interface=wlan0
+    driver=nl80211
+    ssid=YOUR_STATION
+    hw_mode=g
+    channel=11
+    wpa=2
+    wpa_passphrase=SECRETPASSWORD
+    wpa_key_mgmt=WPA-PSK
+    #wpa_pairwise=TKIP CCMP
+    wpa_ptk_rekey=600
+    macaddr_acl=0
+** sudo vim /etc/default/hostapd
+    #DAEMON_CONF=""
+    DAEMON_CONF="/etc/hostapd/hostapd.conf"
+** start
+    sudo service hostapd start
+    sudo service udhcpd start
+** Did not work
+*** Missing piece, unconfigured /etc/udhcpd.conf
+**** Change 3 lines of default settings, https://udhcp.busybox.net/README.udhcpd
+    start           192.168.47.20   #default: 192.168.0.20 
+    end             192.168.47.254  #default: 192.168.0.254
+    interface       wlan0           #default: eth0
+* NAT
+** 4. enable IP forwarding in the kernel:???
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+*** To set this up automatically on boot, edit the file /etc/sysctl.conf and add the following line to the bottom of the file:
+    net.ipv4.ip_forward=1
+** Second, to enable NAT in the kernel, run the following commands:???
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+*** To make this permanent so you don't have to run the commands after each reboot, run the following command:
+    sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
+*** Now edit the file /etc/network/interfaces and add the following line to the bottom of the file:
+    up iptables-restore < /etc/iptables.ipv4.nat
+** 5. Fire it up! Run the following commands to start the access point:
+    sudo service hostapd start
+    sudo service udhcpd start
+*** Your Pi should now be hosting a wireless hotspot. To get the hotspot to start on boot, run these additional commands:
+    sudo update-rc.d hostapd enable
+    sudo update-rc.d udhcpd enable
+
+==20170311 092108 .bash_aliases==
+* 
+    alias tm=tmux
+    alias tml='tmux ls && tmux list-clients'
+    alias tma='tmux attach'
+    alias tmd='tmux detach -t'
+    alias ll='ls -la'
+==20170309 201545==
+* Perl and git are pre-installed
+* Configure ssh key to access n6 and tw700
+* sudo -i : echo ssh > /boot/ssh to enable sshd
+* sudo apt-get install tmux
+* sudo apt-get install vim
+* Doesn't match Pi Zero W: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-3-network-setup/setting-up-wifi-with-occidentalis
+* https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
+** sudo vim /etc/network/interfaces
+* tightvnc: http://www.instructables.com/id/Setting-up-a-VNC-Server-on-your-Raspberry-Pi/?ALLSTEPS http://myraspberrypiexperience.blogspot.com/p/setting-up-vnc.html
+    sudo apt-get install tightvncserver
+    vncserver :1
+    vncserver -kill :1
+    vncserver :1 -geometry 1280x800 -depth 16 -pixelformat rgb565
+
+    Creating default startup script /root/.vnc/xstartup
+    Starting applications specified in /root/.vnc/xstartup
+    Log file is /root/.vnc/raspberrypi:1.log
+** mesages
+    New 'X' desktop is raspberrypi:1
+
+    Creating default startup script /home/pi/.vnc/xstartup
+    Starting applications specified in /home/pi/.vnc/xstartup
+    Log file is /home/pi/.vnc/raspberrypi:1.log
+* VNC: https://www.realvnc.com/docs/raspberry-pi.html
+** sudo apt-get remove realvnc-vnc-server realvnc-vnc-viewer
+** sudo apt-get autoremove
+** sudo apt-get update 
+** sudo apt-get install realvnc-vnc-server realvnc-vnc-viewer
+** sudo raspi-config
+*** navigate to Advanced Options > VNC and select Yes
+** You can operate VNC Server exclusively at the command line or via SSH if you prefer.  Common commands for Raspbian Jessie (which is based on Debian 8, and uses systemd) are:
+** To start VNC Server now: sudo systemctl start vncserver-x11-serviced.service
+** To start VNC Server at next boot, and every subsequent boot: sudo systemctl enable vncserver-x11-serviced.service
+** To stop VNC Server: sudo systemctl stop vncserver-x11-serviced.service
+** To prevent VNC Server starting at boot: sudo systemctl disable vncserver-x11-serviced.service
+
+
+
+---
+* Connect USB power to outer USB connector, keyboard/mouse to inner USB connector, HDMI to monitor. Should soon see GUI desktop
+* First screen: 
+** NOOBS v2.2 Built: Feb 20 2017 ... Wifi networks (w)
+*** https://www.raspberrypi.org/downloads/noobs/
+**** NOOBS is an easy operating system installer which contains Raspbian. It also provides a selection of alternative operating systems which are then downloaded from the internet and installed.
+*** ACTION#2: click 'Wifi networks (w): connect to MDS_wireless
+**** connecteed and NOOBS started listing a whole bunch of additional components for selection: select
+**** (pre-existing) Raspbian (RCOMMENDED) A port of Debian jessie for the Rasberry Pi (full desktop version)
+**** select and install only Raspbian
+** Botton of screen: Language (I): English (UK) Keyboard (9): gb.
+*** ACTION#1:Change to English (US) Keyboard (9): us
+
+%SHOWOFF:ALWAYS%
+%DASHHIDE:OFF%
+
+=*o*----**=
+==*o*dobelow**==
+* 20190120 005353 
+* 20181022 095347 [[#vvv]] *l*vvvvvvvvvv**
+==*o*abovenew**==
+* 20190120 005349 
+* 20180807 004531 *l*^--^new--^**
+==*o*doabove**==
+* 20181213 140020 
+* 20180807 003325 *l*^^^^^^^^^^**
+==*o*roll blw**==???
+* 20181221 135453 
+* 20181010 232119 *G*''keep'8'day'away'**
+==*o*roll abv**==
+* 20181020 224503 
+* 20181010 232119 *G*^^keep^8^day^away^**
+==*o*roll now**==
+* 20181015 225039 
+* 20181010 232119 *G*^^3day^push^8day^^**
+==*o*timer**==
+* 20190715 212940 
+
+
+=*h*Do @**=
+==*r*Today Q!**==???
+* 20180908 082552 
+==*r*NMI!**==???
+* 20180908 082552 
+==*h*Do now**==
+* 20180908 082552 
+==*h*Do next**==
+* 20180708 004002 
+==*h*Do near**==
+* 20180828 003828 
+==*h*Do date**==
+* 20180828 003828 
+
+=*f*KIV**=
+==*B*scratch**==???
+* 20180708 004002 
+==*s*bkmk**==
+* 20180708 004002 
+* 20180708 004002 !push8:
+* 20100101 000000 *d*[[/dash.htm?fildesc=on&catflt=\/now\/%7C\/nmi\/&process=Process&path=$&dash_all=all|/nmi/now/]]**
+* 20100101 000000 *s*[[/dash.htm?fildesc=on&catflt=(\@\@)&process=Process&path=$&&dash_all=all|@@]]** -- *s*[[/dash.htm?fildesc=on&catflt=(^\.)&process=Process&path=$&&dash_all=all|^.]]** -- *d*([[/dash.htm?fildesc=on&catflt='&#39;'&process=Process&path=$&&dash_all=all|'&#39;']] -- [[/dash.htm?fildesc=on&catflt=('&#39;')&process=Process&path=$&&dash_all=all|full]])**  -- *d*[[/dash.htm?fildesc=on&catflt=\/[1-9]\d{0,2}\/&process=Process&path=$&&dash_all=all|/#/...]] -- [[/dash.htm?fildesc=on&catflt=(\/[1-9]\d{0,2}\/)&process=Process&path=$&&dash_all=all|/#/...]]** -- **[[/dash.htm?fildesc=on&catflt=\/&#110;mi\/&process=Process&path=$&&dash_all=all|/&#110;mi/]]** -- **[[/dash.htm?fildesc=on&catflt=\/now\/&process=Process&path=$&&dash_all=all|/now/]]** -- **[[/dash.htm?fildesc=on&catflt=%5C%2B%5Cd%2B+%2B%5C%5B%5Cd%2B%5C%5D&process=Process&path=$&&dash_all=all|@ date]]** -- **([[/dash.htm?fildesc=on&catflt=push8:&process=Process&path=$&&dash_all=all|push8:]] -- [[/dash.htm?fildesc=on&catflt=(push8:)&process=Process&path=$&&dash_all=all|full]])** -- **([[/dash.htm?fildesc=on&catflt=push3:&process=Process&path=$&&dash_all=all|push3:]] -- [[/dash.htm?fildesc=on&catflt=(push3:)&process=Process&path=$&&dash_all=all|full]])** -- **([[/dash.htm?fildesc=on&catflt=push1:&process=Process&path=$&&dash_all=all|push1:]] -- [[/dash.htm?fildesc=on&catflt=(push1:)&process=Process&path=$&&dash_all=all|full]])** -- **([[/dash.htm?fildesc=on&catflt=push0:&process=Process&path=$&&dash_all=all|push0:]] -- [[/dash.htm?fildesc=on&catflt=(push0:)&process=Process&path=$&&dash_all=all|full]])** !!!
+==*f*Goals**==???
+* 20180708 004002 
+==*r*Inbox!**==???
+* 20180708 004002 
+==*r*Banner!**==???
+* 20180708 004002 
+
+=*S*Prj1**=
+==*S*Prj11**==
+* 20200830 021844 first boot, follow instructions
+* 20200830 021832 '''reinstall
+* 20180828 003828 
+==*S*Prj12**==
+* 20180828 003828 
+
+=*l*Prj2**=
+==*l*Prj21**==
+* 20180828 003828 
+==*l*Prj22**==
+* 20180828 003828 
+
+---
+
+%DASHHIDE:ON%
+=hp=
+* Notes
+
+
+%DASHHIDE:OFF%
+
+
+%INCLUDE<./dashcfg.txt>%
+
+** [[#disp]] [[/ls.htm?find=Find&findtext=%5E%5C%3D%3D%3D&block=.&prefmt=on&path=$|===hidden ===]] - [[/txtdopl.htm?runbare=RunBare&path=$|Processed table]]
+** adb.in dash 20337:
+%SHOWON:ALWAYS%
+http://127.0.0.1:20337/dash.htm?path=C:\x\ram\l00\NtRaspberryPi0w.txt
