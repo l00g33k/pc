@@ -1,0 +1,396 @@
+
+sudo apt-get install hostapd udhcpd
+
+sudo vim /etc/hostapd/hostapd.conf
+sudo service hostapd enable
+sudo systemctl unmask hostapd
+sudo systemctl status hostapd
+sudo systemctl start hostapd
+
+interface=wlan0
+driver=nl80211
+ssid=YOUR_STATION
+hw_mode=g
+channel=11
+wpa=2
+wpa_passphrase=SECRETPASSWORD
+wpa_key_mgmt=WPA-PSK
+#wpa_pairwise=TKIP CCMP
+wpa_ptk_rekey=600
+macaddr_acl=0
+
+sudo vim /etc/default/hostapd
+
+#DAEMON_CONF=""
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+sudo vim /etc/dhcp/dhcpd.conf
+
+start 192.168.47.100 # This is the range of IPs that the hostspot will give to client devices.
+end 192.168.47.110
+interface wlan0 # The device uDHCP listens on.
+remaining yes
+#opt dns 8.8.8.8 4.2.2.2 # The DNS servers client devices will use.
+opt subnet 255.255.255.0
+#opt router 192.168.42.1 # The Pi's IP address on wlan0 which we will set up shortly.
+opt lease 864000 # 10 day DHCP lease time in seconds
+
+
+
+
+
+
+---
+
+
+
+=Auto WiFi Hotspot if no Internet=
+* 20170425 235729 Raspberry Connect - Raspberry PI 3 Auto WiFi Hotspot if no Internet : http://www.raspberryconnect.com/network/item/315-rpi3-auto-wifi-hotspot-if-no-internet : null :: action / type android.intent.action.SEND text/plain null all fail
+** My requirements are for when the pi is at home it connects to my home router or other known routers so it is available on the local network. If no router is found when it is started up then it will create a wifi hotspot, which is not rooted to the Internet, so i can SSH to the RPi from another device and control the camera and run other custom scripts
+** This article is not the latest version of the AutoHotspot script, two new versions are now available. For WiFi Network and automatically switching to direct access only Hotspot suitable for the Pi Zero W then use Raspeberry Pi - Auto WiFi Hotspot Switch - Direct Connection
+==Zero W==
+* REALLY WORKED
+** stop wifi client
+    sudo wpa_cli terminate
+    sudo ip addr flush "wlan0"
+    sudo ip link set dev "wlan0" down
+    sudo rm -r /var/run/wpa_supplicant
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+---
+
+** start wifi client
+    sudo service hostapd stop
+    sudo service udhcpd stop
+
+    sudo ip link set dev "wlan0" down
+    sudo ip addr flush dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+    sudo ifdown wlan0
+    sudo ifup wlan0
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sudo ifdown wlan0
+    sudo ifup wlan0
+    sudo wpa_cli terminate
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sleep 10
+    sudo ifdown wlan0
+    sudo ifup wlan0
+
+---
+
+            sudo wpa_cli -i "wlan0" status 
+            sudo wpa_cli -i "wlan0" status | grep 'ip_address'
+            sudo iw dev "wlan0" scan ap-force | egrep "^BSS|SSID:"
+
+
+        sudo service hostapd stop
+        sudo service hostapd start
+        sudo service udhcpd stop
+        sudo service udhcpd start
+
+            sudo systemctl stop hostapd
+            sudo systemctl stop dnsmasq
+
+
+*** install dnsmasq (not used)
+    sudo apt-get install dnsmasq
+    sudo systemctl disable dnsmasq
+    sudo vim /etc/dnsmasq.conf
+    #Go to the bottom of the file and add the following lines (download here)
+#AutoHotspot Config
+#stop DNSmasq from using resolv.conf
+no-resolv
+#Interface to use
+interface=wlan0
+bind-interfaces
+dhcp-range=192.168.47.100,192.168.47.120,12h
+
+* This works
+** start AP
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+
+
+
+        sudo wpa_cli terminate
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+** stop AP
+    sudo service hostapd stop
+    sudo service udhcpd stop
+
+    sudo ifdown wlan0
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+    sudo ifup wlan0
+
+
+
+
+
+    sudo ifconfig wlan0 dhcp
+
+    sudo wpa_cli terminate
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+
+
+
+---
+* http://www.raspberryconnect.com/network/item/331-raspberry-pi-auto-wifi-hotspot-switch-no-internet-routing
+* Can't follow partialy.
+* iw dev
+    sudo iw dev "wlan0" scan ap-force | egrep "^BSS|SSID:"
+* stop wifi client
+    sudo wpa_cli terminate
+    sudo ifdown wlan0
+
+    sudo wpa_cli terminate
+    sudo ip addr flush "wlan0"
+    sudo ip link set dev "wlan0" down
+    sudo rm -r /var/run/wpa_supplicant
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+    sudo ip link set dev "wlan0" down
+    sudo ip addr flush dev "wlan0"
+    sudo ip link set dev "wlan0" up
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+    sudo wpa_cli -i "wlan0" status | grep 'ip_address'
+
+
+* start wifi client
+    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+    sudo ifup wlan0
+
+    sudo wpa_cli -i "wlan0" status
+* start ap
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+        systemctl start dnsmasq
+        systemctl start hostapd
+
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 192.168.47.1
+    sudo ifup wlan0
+    sudo service hostapd stop
+    sudo service hostapd start
+    sudo service udhcpd stop
+    sudo service udhcpd start
+
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+
+        sudo sh -c "iptables-save > /etc/iptables.ipv4.org"
+
+* stop ap
+    sudo service hostapd stop
+    sudo service udhcpd stop
+    sudo ifup wlan0
+    sudo dhclient -r wlan0
+    sudo dhclient wlan0
+
+    sudo ifdown wlan0
+    sudo ifconfig wlan0 dhcp
+
+    sudo ip link set dev "wlan0" down
+    sudo ip a replace 192.168.47.1/24 brd + dev "wlan0"
+    sudo ip link set dev "wlan0" up
+
+
+
+
+==Replicating on Pi3b==
+* 20190802 171338 
+
+sudo apt-get install hostapd udhcpd
+
+sudo vim /etc/hostapd/hostapd.conf
+
+interface=wlan0
+driver=nl80211
+ssid=YOUR_STATION
+hw_mode=g
+channel=11
+wpa=2
+wpa_passphrase=SECRETPASSWORD
+wpa_key_mgmt=WPA-PSK
+#wpa_pairwise=TKIP CCMP
+wpa_ptk_rekey=600
+macaddr_acl=0
+
+sudo vim /etc/default/hostapd
+
+#DAEMON_CONF=""
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+sudo vim /etc/dhcp/dhcpd.conf
+
+start 192.168.47.100 # This is the range of IPs that the hostspot will give to client devices.
+end 192.168.47.110
+interface wlan0 # The device uDHCP listens on.
+remaining yes
+#opt dns 8.8.8.8 4.2.2.2 # The DNS servers client devices will use.
+opt subnet 255.255.255.0
+#opt router 192.168.42.1 # The Pi's IP address on wlan0 which we will set up shortly.
+opt lease 864000 # 10 day DHCP lease time in seconds
+
+
+sudo wpa_cli terminate
+sudo ip addr flush "wlan0"
+sudo ip link set dev "wlan0" down
+sudo rm -r /var/run/wpa_supplicant
+
+sudo ip link set dev "wlan0" down
+sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo service hostapd stop
+sudo service hostapd start
+sudo service udhcpd stop
+sudo service udhcpd start
+
+sudo systemctl status hostapd
+sudo systemctl status udhcpd
+
+
+sudo service hostapd start
+sudo service hostapd stop
+sudo service hostapd status
+sudo service hostapd enable
+sudo systemctl unmask hostapd
+sudo systemctl status hostapd
+sudo systemctl start hostapd
+
+
+
+
+
+sudo service hostapd stop
+sudo service udhcpd stop
+sudo ip link set dev "wlan0" down
+sudo ip addr flush dev "wlan0"
+sudo ip link set dev "wlan0" up
+sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+sudo sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables --flush FORWARD
+sudo iptables -t nat -F
+sudo iptables-save 
+
+
+
+
+hot:
+sudo wpa_cli terminate
+sudo ip addr flush "wlan0"
+sudo ip link set dev "wlan0" down
+sudo rm -r /var/run/wpa_supplicant
+
+sudo ip link set dev "wlan0" down
+sudo ip a add 192.168.47.1/24 brd + dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo service hostapd stop
+sudo service hostapd start
+sudo service udhcpd stop
+sudo service udhcpd start
+
+
+
+cold:
+
+sudo service hostapd stop
+sudo service udhcpd stop
+
+sudo ip link set dev "wlan0" down
+sudo ip addr flush dev "wlan0"
+sudo ip link set dev "wlan0" up
+
+sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+sudo sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+sudo iptables --flush FORWARD
+sudo iptables -t nat -F
+sudo iptables-save 
+
+
+
+    RestartWifi()
+    {
+    loop=1
+
+    retries9=30
+    wait9=10
+
+    retries=0
+    wait=0
+
+    while [ $loop -eq 1 ]; do
+        if ! sudo wpa_cli -i "wlan0" status | grep 'ip_address' >/dev/null 2>&1
+        then
+            #echo Wifi is not connected
+            # no wifi, sleep
+            wait=$(($wait+1))
+            if [ $wait -ge $wait9 ]; then
+                # timeout
+                if [ $retries -ge $retries9 ]; then
+                    # tried too many times
+                    loop=0
+                    echo $retries:$wait: Wifi is **NEVER** connected
+                else
+                    # try one more time
+                    retries=$(($retries+1))
+                    wait=$wait0
+                    echo Kick wifi
+                    set -vx
+                    sudo wpa_cli terminate >/dev/null 2>&1
+                    sleep 3
+                    sudo wpa_supplicant -B -i "wlan0" -c /etc/wpa_supplicant/wpa_supplicant.conf >/dev/null 2>&1
+                    set +vx
+                fi
+            else
+                echo $retries:$wait: sleep 1 sec
+                sleep 1
+            fi
+        else
+            # has wifi, done
+            loop=0
+            echo $retries:$wait: Wifi is connected
+        fi
+
+    done
+    }
+
+    echo run RestartWifi
+    RestartWifi
+
+
