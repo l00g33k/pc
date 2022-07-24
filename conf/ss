@@ -1,1 +1,2 @@
+#tmux new-session \; new-window bash -c 'cd /sdcard/g/WikiPland && while : ; do perl -I . l00httpd.pl && break; done' \; detach-client
 sshd -D -e -oKexAlgorithms=+diffie-hellman-group1-sha1 -p 20339
