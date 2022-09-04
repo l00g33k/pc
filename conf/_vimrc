@@ -3,6 +3,11 @@ set tabstop=4
 set shiftwidth=4
 set softtabstop=4
 
+hi DiffAdd      ctermfg=NONE        ctermbg=Green
+hi DiffChange   ctermfg=NONE        ctermbg=NONE
+hi DiffDelete   ctermfg=White       ctermbg=Red
+hi DiffText     ctermfg=Yellow      ctermbg=Magenta
+
 highlight DiffAdd    term=bold ctermfg=white ctermbg=Blue guibg=LightBlue
 highlight DiffChange term=bold ctermbg=225 guibg=LightMagenta
 highlight DiffDelete term=bold ctermfg=red ctermbg=159 gui=bold guifg=Blue guibg=LightCyan

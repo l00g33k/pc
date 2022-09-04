@@ -59,6 +59,7 @@ alias tml='tmux ls && tmux list-clients'
 alias   t="tmux attach 2>&1 | grep 'no .*session' && echo no sessions, will create, Enter to continue && read && tmux -u"
 alias tma='tmux attach $@'
 alias tmd='tmux detach -t'
+alias tmp='tmux list-panes -a -F "#{session_id}:#{window_index}:#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}"'
 alias  tt='printf "\033k%s\033\\" $1'
 alias   e='exit'
 
