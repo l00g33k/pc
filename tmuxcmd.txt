@@ -1,0 +1,7 @@
+Multi-windows command line example:
+
+tmux new-session "bash -c 'echo HELLO_ENTER1  ; read ; bash'" \; rename-window win1 \; \
+new-window       "bash -c 'echo HELLO_ENTER2t ; read ; bash'" \; rename-window win2 \; \
+split-window -v  "bash -c 'echo HELLO_ENTER2b ; read ; bash'" \; \
+new-window       "bash -c 'echo HELLO_ENTER3  ; read ; bash'" \; rename-window win3 \; \
+select-window -t :1 \; select-pane -t 0 \; detach-client
