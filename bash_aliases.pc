@@ -45,7 +45,7 @@ alias   tt='printf "\033k%s\033\\" $1'
 
 #universal on any computer beyond mine
 
-alias da='while true; do date -R ; sleep 1 ; done'
+alias da='S0=$SECONDS; while true; do echo "$(hostname) $(date -Is | sed "s/-[0-9][0-9]:00//") $(( $SECONDS - $S0 ))" ; S0=$SECONDS ; sleep 1 ; done'
 if [[ "$(uname)" == "Linux" ]]; then
     # Linux; sudo apt install xclip; restart tmux
     alias dt='echo -n "$(date +'\''WAL - %Y/%m/%d %H:%M:%S %a'\'')" | xclip -sel clip'
