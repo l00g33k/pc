@@ -75,6 +75,8 @@ alias     gc="git commit -am "
 alias     gd="git diff"
 alias     gs="git status"
 alias   gitr="git remote -v"
+# set ST and EN
+alias gdif='echo "ST=${ST:=HEAD^^^} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 
 
 # rename space to _
