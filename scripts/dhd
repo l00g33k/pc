@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#----------------------- ghd
+date -R > $GITOUT
+for git in $(find -type d -name .git | xargs dirname) ; do 
+    pushd $git
+    echo "Visiting $(pwd)"
+    printf "%-15s" "$(pwd | sed 's/^.*\///')" >> $GITOUT
+    git log --all --graph --pretty=format:'%Cred%h%Creset -%C(magenta)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit | head -n 1 | sed 's/).*/)/' | sed 's/^.*\* /* /' >> $GITOUT
+    printf "%-15s" "$(pwd | sed 's/^.*\///')" >> $GITOUT
+    git log --all --graph --pretty=format:'%Cred%h%Creset -%C(magenta)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit | grep -E "^origin.*fetch|\(HEAD" | sed 's/).*/)/' | sed 's/^.*\* /* /' >> $GITOUT
+    popd
+done
+
+cat $GITOUT
+tail -n 14 $GITOUT | sed 's/.*\* \([^ ]*\).*/\1/' | md5sum

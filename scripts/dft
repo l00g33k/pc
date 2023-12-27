@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#----------------------- gft
+for git in $(find -type d -name .git | xargs dirname) ; do 
+    pushd $git
+    echo -------------------------------------
+    echo "Visiting $(pwd)"
+    git fetch $1
+    popd
+done
+echo -------------------------------------

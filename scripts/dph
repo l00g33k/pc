@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#----------------------- gph
+for git in $(find -type d -name .git | xargs dirname) ; do 
+    pushd $git
+    echo -------------------------------------
+    echo "Visiting $(pwd)"
+    pwd
+    git push $1 $2
+    popd
+done
+echo -------------------------------------

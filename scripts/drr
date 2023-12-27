@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#----------------------- gst
+date -R > $GITOUT
+for git in $(find -type d -name .git | xargs dirname) ; do 
+    pushd $git
+    echo "Visiting $(pwd)"
+    echo "Visiting $(pwd)" >> $GITOUT
+#   printf "%-15s%s\n" "$(pwd | sed 's/^.*\///')" "$(git status | grep -E -v '[()]|^ *$' | grep -v 'Your branch is ' | sed 's/ directory / tree /')" >> $GITOUT
+    git remote -v >> $GITOUT
+    echo '________________________________=====' >> $GITOUT
+    popd
+done
+
+less -N -S $GITOUT
