@@ -101,4 +101,6 @@ fi
 # add mc if mc
 PSOPT=''
 if [[ ! -z "$OS" ]]; then PSOPT='-p'; fi
-if ps $PSOPT $PPID | grep -iP 'mc$' | grep -P "^ *$PPID" ; then PS1="${PS1}mc $ "; fi
+if ps $PSOPT | grep -P "^ *$PPID" | grep -iP 'mc$' ; then PS1="${PS1}mc $ "; fi
+
+
