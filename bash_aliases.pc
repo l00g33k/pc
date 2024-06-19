@@ -56,10 +56,12 @@ fi
 alias  ll='ls -la --color=never'
 alias  tm='tmux -u'
 alias tml='tmux ls && tmux list-clients'
-alias   t="tmux attach 2>&1 | grep 'no .*session' && echo no sessions, will create, Enter to continue && read && tmux -u"
+alias   t="tmux ls && tmux list-clients ; read -p ENTER ; tmux attach 2>&1 | grep 'no .*session' && echo no sessions, will create, Enter to continue && read && tmux -u"
 alias tma='tmux attach $@'
 alias tmd='tmux detach -t'
-alias tmp='tmux list-panes -a -F "#{session_id}:#{window_index}:#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}"'
+#alias tmp='ps axjf ; tmux list-panes -a -F "#{session_id}:#{window_index}.#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}"'
+alias tmp='echo "$(ps axjf) $(tmux list-panes -a -F "#{session_id}:#{window_index}.#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}")" | less -NS +G'
+alias tmw='tmux list-windows -a -F "#{session_id}:#{window_index} - #{window_name} - #{window_layout}"'
 alias  tt='printf "\033k%s\033\\" $1'
 alias   e='exit'
 
@@ -101,6 +103,4 @@ fi
 # add mc if mc
 PSOPT=''
 if [[ ! -z "$OS" ]]; then PSOPT='-p'; fi
-if ps $PSOPT | grep -P "^ *$PPID" | grep -iP 'mc$' ; then PS1="${PS1}mc $ "; fi
-
-
+if ps $PSOPT $PPID | grep -iP 'mc$' | grep -P "^ *$PPID" ; then PS1="${PS1}mc $ "; fi
