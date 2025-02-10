@@ -41,6 +41,7 @@ else
     alias gcdd="pwd | sed 's/\\//\\\\/g' | sed -E 's/\\\\cygdrive\\\\(.)(.+)/\\1:\\2/' | sed -E 's/^(.*)$/&\\r/' | tee /dev/clipboard"
 fi
 alias sshh='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+alias  lsd='echo "Top of stack is 0:" ; for (( ii=0 ; ii<${#DIRSTACK[*]} ; ii++ )) ; do echo "$ii: ${DIRSTACK[$ii]}" ; done'
 alias   tt='printf "\033k%s\033\\" $1'
 
 #universal on any computer beyond mine
@@ -60,8 +61,7 @@ alias tml='tmux ls && tmux list-clients'
 alias   t="tmux ls && tmux list-clients ; read -p 'ENTER ('n' for new session, or #): ' NEWSES ; if [[ -z \"\$NEWSES\" ]] ; then tmux attach -t 0 2>&1 | grep 'no .*session' && echo no sessions, will create, Enter to continue && read && tmux -u ; else if [[ \"n\" == \"\$NEWSES\" ]] ; then tmux -u ; else tmux attach -t \$NEWSES ; fi ; fi"
 alias tma='tmux attach $@'
 alias tmd='tmux detach -t'
-#alias tmp='ps axjf ; tmux list-panes -a -F "#{session_id}:#{window_index}.#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}"'
-alias tmp='echo "$(ps axjf) $(tmux list-panes -a -F "#{session_id}:#{window_index}.#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  cmdln:#{pane_current_command} @ #{pane_current_path}")" | less -NS +G'
+alias tmp='echo "$(ps axjf) $(tmux list-panes -a -F "#{session_id}:#{window_index}.#{pane_index}  HIS:#{history_size}/#{history_limit}  PID:#{pane_pid} #{pane_id}  NAME:#{window_name}  cmdln:#{pane_current_command}  PWD:#{pane_current_path}")" | less -NS +G'
 alias tmw='tmux list-windows -a -F "#{session_id}:#{window_index} - #{window_name} - #{window_layout}"'
 alias  tt='printf "\033k%s\033\\" $1'
 alias   e='exit'
@@ -73,8 +73,10 @@ alias   e='exit'
 alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit | head -n 7"
 alias gitkk="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
 alias gitk0="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
+alias   g1st='for BR in $(git branch -a | sed "s/ *remotes\///" | sed "s/^\*//" | sed "s/^ *//" | grep -v " -. " | grep -v HEAD) ; do echo -e "$(git rev-list --max-parents=0 $BR)  $BR" ; done | sed "s/  .*//" | sort | uniq'
 alias     ga="git add ."
 alias     gc="git commit -am "
+alias   gccc="git commit"
 alias     gd="git diff"
 alias     gs="git status"
 alias   gitr="git remote -v"
