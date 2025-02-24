@@ -1,0 +1,24 @@
+* Download https://cygwin.com/set-x86_64.exe to c:\cygwin64\ and install
+* Download directory: c:\2\cyg\dl\
+* Create shortcut:
+    C:\cygwin64\bin\mintty.exe -i /Cygwin-Terminal.ico -
+** Configure mintty: menu -- Options
+*** Looks
+**** Foreground: RGB 0 0 0
+**** Background: RGB 255 255 190
+**** Cursor: RGB 128 128 0
+**** Cursor: Block
+*** Text
+**** Font: Lucida Console, 12pt
+**** Show bold: as color
+* Copy config:
+** cp _tmux.conf ~/.tmux.conf
+** cp _vimrc ~/.vimrc
+* update .bashrc
+    . /cygdrive/c/2/g/pc/bash_aliases.pc
+* setup ssh
+** ssh-keygen -t rsa
+* Windows firewall
+** Windows Security -- Firewall & network protection: Allow an app through firewall: 
+nc.exe
+ssh.exe
