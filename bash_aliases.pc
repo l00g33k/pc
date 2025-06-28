@@ -85,7 +85,7 @@ alias gdifp='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD} PTH=${PTH:=.gitignore}" ; re
 # works with all git in sub-dir
 export GITOUT="$(mktemp)"
 alias dgit="source $(dirname ${BASH_SOURCE[0]})/scripts/dgit"
-alias dgitdir="source $(dirname ${BASH_SOURCE[0]})/scripts/dgitdir"
+alias dgitls="source $(dirname ${BASH_SOURCE[0]})/scripts/dgitls"
 alias dft="source $(dirname ${BASH_SOURCE[0]})/scripts/dft"
 alias dhd="source $(dirname ${BASH_SOURCE[0]})/scripts/dhd"
 alias dph="source $(dirname ${BASH_SOURCE[0]})/scripts/dph"
