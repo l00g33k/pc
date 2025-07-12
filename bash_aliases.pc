@@ -79,7 +79,8 @@ alias     gd="git diff"
 alias     gs="git status"
 alias   gitr="git remote -v"
 # set ST and EN
-alias gdif='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
+alias gdif='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; git log -c $ST..$EN | less -NS "+/^commit .*|^diff --" "+&^commit .*|^diff --"'
+alias gdiff='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 alias gdifp='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD} PTH=${PTH:=.gitignore}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN -- $PTH) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 
 # works with all git in sub-dir
