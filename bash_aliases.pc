@@ -87,6 +87,7 @@ alias gdifp='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD} PTH=${PTH:=.gitignore}" ; re
 export GITOUT="$(mktemp)"
 alias dgit="source $(dirname ${BASH_SOURCE[0]})/scripts/dgit"
 alias dgitls="source $(dirname ${BASH_SOURCE[0]})/scripts/dgitls"
+alias dgitmkhost="source $(dirname ${BASH_SOURCE[0]})/scripts/dgitmkhost"
 alias dft="source $(dirname ${BASH_SOURCE[0]})/scripts/dft"
 alias dhd="source $(dirname ${BASH_SOURCE[0]})/scripts/dhd"
 alias dph="source $(dirname ${BASH_SOURCE[0]})/scripts/dph"

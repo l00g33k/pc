@@ -1,0 +1,22 @@
+function dgitmakehost {
+    local HOSTNAME=$1
+    local HOSTURL=$2
+    local LOCALPATH=$3
+
+    echo "dgitmakehost: $HOSTNAME => $HOSTURL @ $LOCALPATH"
+    mkdir -p $LOCALPATH
+    pushd $LOCALPATH
+    if [[ ! -f .git/config ]]; then
+        echo "RUN: git init"
+        git init
+    fi
+    if ! git remote get-url $HOSTNAME 2> /dev/null ; then
+        echo "RUN: git remote add $HOSTNAME $HOSTURL"
+        git remote add $HOSTNAME $HOSTURL
+    fi
+    echo "existing host URL:"
+    git remote -v
+    popd
+}
+
+echo "dgitmkhost defined function dgitmakehost()"
