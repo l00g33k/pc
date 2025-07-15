@@ -1,7 +1,7 @@
 function dgitmakehost {
     local HOSTNAME=$1
     local HOSTURL=$2
-    local LOCALPATH="$3$DGITPATHEX"
+    local LOCALPATH="$DGITPATHEX$3"
 
     echo "dgitmakehost: $HOSTNAME => $HOSTURL @ $LOCALPATH"
     mkdir -p $LOCALPATH
@@ -20,5 +20,6 @@ function dgitmakehost {
 }
 
 echo "dgitmkhost defined function dgitmakehost()"
+echo "e.g.: dgitmakehost hname URL reponame"
 export DGITPATHEX=''
-echo "export DGITPATHEX='', i.e. LOCALPATH=\"\$3\$DGITPATHEX\""
+echo "export DGITPATHEX=sub/ => prepended before reponame"
