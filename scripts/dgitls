@@ -7,7 +7,6 @@ for git in $(find -type d -name .git | xargs dirname) ; do
     pushd $git > /dev/null
     printf "_______________ In repo: %-40s  _____________________\n" "$(pwd | sed 's/^\/cygdrive//')" | tee -a $GITOUT
     # find all commits without parents
-    echo "du-sb: $(du -sb $(pwd))" | tee -a $GITOUT
     echo -n "INITIAL: " | tee -a $GITOUT
     for BR in $(git branch -avv | grep -v HEAD | sed 's/^\*/ /;s/  */ /g' | cut -d' ' -f 3 | sort | uniq) ; do
         echo -e "$(git rev-list --max-parents=0 $BR)" ; 
@@ -15,6 +14,8 @@ for git in $(find -type d -name .git | xargs dirname) ; do
     echo | tee -a $GITOUT
     echo "initial: $(git log --pretty=format:'%h (%ci)' --no-abbrev-commit --max-parents=0 | tr '\n' ' ')" | tee -a $GITOUT
     echo "newest : $(git log --pretty=format:'%h (%ci)' --no-abbrev-commit -n 1)" | tee -a $GITOUT
+    echo "du-sb: $(du -sb $(pwd))" | tee -a $GITOUT
+    echo "du-sb.git: $(du -sb $(pwd)/.git)" | tee -a $GITOUT
     git remote -v 2>&1 | grep '(fetch)' | tee -a $GITOUT
     echo "---end---" | tee -a $GITOUT
     popd > /dev/null
