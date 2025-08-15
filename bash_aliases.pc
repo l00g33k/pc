@@ -97,9 +97,13 @@ alias drr="source $(dirname ${BASH_SOURCE[0]})/scripts/drr"
 # rename space to _
 function mvnospc {
     echo "mv \"$1\" \"$(echo -e "$1" | sed 's/ /_/g')\""
-    mv "$1" "$(echo -e "$1" | sed 's/ /_/g')"
+    if [[ -e "$1" ]]; then
+        mv "$1" "$(echo -e "$1" | sed 's/ /_/g')"
+    else
+        echo "Target '$1' does not exist"
+    fi
 }
-
+alias nos=mvnospc
 
 if uname -a | grep -v -- -kali; then
     # don't change PS1 on kali Linux
