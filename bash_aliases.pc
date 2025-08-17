@@ -72,6 +72,7 @@ alias   e='exit'
 # also real scripts: ugit  uhd  ukk  usm  ust
 alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit | head -n 7"
 alias gitkk="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
+alias gitkx="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit --simplify-by-decoration"
 alias gitk0="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
 alias   g1st='for BR in $(git branch -a | sed "s/ *remotes\///" | sed "s/^\*//" | sed "s/^ *//" | grep -v " -. " | grep -v HEAD) ; do echo -e "$(git rev-list --max-parents=0 $BR)  $BR" ; done | sed "s/  .*//" | sort | uniq'
 alias     ga="git add ."
