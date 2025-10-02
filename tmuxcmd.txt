@@ -1,3 +1,5 @@
+TMUXCMDS="new-window \" bash -c 'cd /sdcard/g/wikipland ; bash -f ./runme_start_WikiPland.sh'\" \; rename-window wiki \; "
+
 Multi-windows command line example:
 
 tmux new-session "bash -c 'echo HELLO_ENTER1  ; read ; bash'" \; rename-window win1 \; \
