@@ -86,6 +86,20 @@ alias gdif='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; git
 alias gdiff='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 alias gdifp='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD} PTH=${PTH:=.gitignore}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN -- $PTH) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 
+alias gsw=\
+'echo "You want to switch to branch \"$GSW\"" | grep -P "\".*\""; \
+echo "You are now on this branch:" ; \
+git log --graph --pretty=format:"%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s" --abbrev-commit  HEAD^..HEAD | grep "HEAD" ; \
+git show HEAD | grep -B 1000 -m 1 "^diff -" | grep -A6 -P "^commit .*|^." ; \
+echo "You want to switch to branch \"$GSW\":" ; \
+git log --graph --pretty=format:"%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s" --abbrev-commit  $GSW^..$GSW | grep "$GSW" ; \
+git show $GSW | grep -B 1000 -m 1 "^diff -" | grep -A6 -P "^commit .*|^." ; \
+echo "GSW=$GSW ! ENTER to switch to \"$GSW\" : " | grep -P ".*!" ; \
+read ; \
+git symbolic-ref HEAD refs/heads/$GSW ; \
+git reset --mixed $GSW ; \
+echo "We have switched to \"$GSW\".  You may want to review git \"index\"" | grep -P ".*"'
+
 # works with all git in sub-dir
 export GITOUT="$(mktemp)"
 alias dgit="source $(dirname ${BASH_SOURCE[0]})/scripts/dgit"
