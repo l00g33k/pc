@@ -14,6 +14,8 @@ if [[ ! -z "${BASH_SOURCE[0]}" ]]; then
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
     DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_local_.sh"
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
+    DOTSH="$(dirname ${BASH_SOURCE[0]})/../pc_mine/tmuxcmd_common.sh"
+    if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
     DOTSH="$(dirname ${BASH_SOURCE[0]})/../pc_mine/tmuxcmd_$WHOAMI.sh"
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
 fi
