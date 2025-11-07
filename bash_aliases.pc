@@ -1,7 +1,7 @@
 # .bash_aliases
 
 # _whoami
-export WHOAMI='unknown'
+export WHOAMI="$(whoami)"
 if [[ -f ~/_whoami ]]; then
     export WHOAMI="$(cat ~/_whoami)"
 fi
@@ -126,7 +126,7 @@ alias nos=mvnospc
 
 if uname -a | grep -v -- -kali; then
     # don't change PS1 on kali Linux
-    PS1='\[\033[01;32m\]222\[\e[1;31m\]++\[\e[1;33m\]@\[\e[1;35m\]$HOSTNAME\[\033[00m\] $(date +"%Y%m%dT%H%M%S"):\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+    PS1='\[\033[01;32m\]$WHOAMI\[\e[1;31m\]++\[\e[1;33m\]@\[\e[1;35m\]$HOSTNAME\[\033[00m\] $(date +"%Y%m%dT%H%M%S"):\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 fi
 # add mc if mc
 PSOPT=''
