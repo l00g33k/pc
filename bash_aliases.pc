@@ -129,6 +129,16 @@ for I in \$(seq 0 1 254); do IP=\"\$IPSUB\$I\" ; ( ping -c 1 -n -W 1 \$IP > /dev
 echo \"WAIT 3 SECONDS\" ; sleep 1 ; echo \"WAIT 2 SECONDS\" ; sleep 1 ; echo \"WAIT 1 SECONDS\" ; sleep 1; echo ; echo \"WAIT 1 SECONDS\" ; \
 echo \"IPAS=\$IPAS\" ; echo \"IPSUB=\$IPSUB*\" ; echo \"cat \$FINDTMP\" ; cat \$FINDTMP"
 
+alias findport="PORT=\${PORT:-22} ; read -p \"find PORT=\$PORT, ENTER:\" ; FINDTMP=\${FINDTMP:-/dev/shm/findhost.txt} ; \
+touch \$FINDTMP ; if [[ ! -w \$FINDTMP ]]; then FINDTMP=~/findhosts.txt; fi ; echo \"FINDTMP=\$FINDTMP\" ; \
+IPAS=\"\$(ip -br a | grep UP | grep -v 127.0.0 | grep ' 10.' ||\
+ip -br a | grep UP | grep -v 127.0.0 | grep -v ' 10.' | head -n 1)'\";\
+IPSUB=\"\$(echo \$IPAS | sed 's/.* UP //;s/\/.*//' | sed 's/[0-9]\$//;s/[0-9]$//;s/[0-9]\$//')\";\
+echo > \$FINDTMP;\
+for I in \$(seq 0 1 254); do IP=\"\$IPSUB\$I\" ; ( ping -c 1 -n -W 1 \$IP > /dev/null && echo \"\$IP: \$(echo | nc -w 1 -v \$IP 20337 2>&1 | grep Login)\" | grep Login ) >> \$FINDTMP & done;\
+echo \"WAIT 3 SECONDS\" ; sleep 1 ; echo \"WAIT 2 SECONDS\" ; sleep 1 ; echo \"WAIT 1 SECONDS\" ; sleep 1; echo ; echo \"WAIT 1 SECONDS\" ; \
+echo \"IPAS=\$IPAS\" ; echo \"IPSUB=\$IPSUB*\" ; echo \"cat \$FINDTMP\" ; cat \$FINDTMP"
+
 
 # rename space to _
 function mvnospc {
