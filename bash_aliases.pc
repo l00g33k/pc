@@ -10,6 +10,7 @@ echo "WHOAMI from ~/_whoami is >$WHOAMI<"
 # source local tmuxcmd_local_.sh
 TMUXCMDS=""
 if [[ ! -z "${BASH_SOURCE[0]}" ]]; then
+    PCPATH="$(dirname ${BASH_SOURCE[0]})"
     DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_$WHOAMI.sh"
     if [[ -f "$DOTSH" ]]; then echo "----- sourcing: $DOTSH" ; source "$DOTSH" ; else echo "----- not here: $DOTSH" ; fi
     DOTSH="$(dirname ${BASH_SOURCE[0]})/tmuxcmd_local_.sh"
