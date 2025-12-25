@@ -2,6 +2,7 @@ set expandtab
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
+set nowrap
 
 hi DiffAdd      ctermfg=NONE        ctermbg=Green
 hi DiffChange   ctermfg=NONE        ctermbg=NONE
