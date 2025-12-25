@@ -42,7 +42,12 @@ function tdos { \
 
 alias   aa='alias | less -N'
 if [[ "$(uname)" == "Linux" ]]; then
-    alias  gcd="pwd | tr '\n' ' ' | sed 's/ *$//' | xclip -sel clip"
+    if echo $HOME | grep com.termux ; then
+        # termux: send to WikiPland clip.htm
+        alias  gcd="echo \"http://localhost:20337/clip.htm?clip=$(pwd | sed 's/ /\\ /g')\""
+    else
+        alias  gcd="pwd | tr '\n' ' ' | sed 's/ *$//' | xclip -sel clip"
+    fi
 else
     alias  gcd="pwd |  tee /dev/clipboard"
     alias gcdd="pwd | sed 's/\\//\\\\/g' | sed -E 's/\\\\cygdrive\\\\(.)(.+)/\\1:\\2/' | sed -E 's/^(.*)$/&\\r/' | tee /dev/clipboard"
