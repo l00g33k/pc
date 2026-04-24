@@ -86,7 +86,6 @@ alias    gh="git log --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%C
 alias gitkk="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit"
 alias gitkx="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%Cred%h%Creset%Cgreen(%ci)%Creset%C(bold blue)<%an>%Creset%C(magenta)%d%Creset %s' --abbrev-commit --simplify-by-decoration"
 alias gitk0="GLOGN=${GLOGN:=999999999} git log -n \$GLOGN --all --graph --pretty=format:'%h(%ci)<%an>%d    %s' --abbrev-commit"
-alias   g1st='for BR in $(git branch -a | sed "s/ *remotes\///" | sed "s/^\*//" | sed "s/^ *//" | grep -v " -. " | grep -v HEAD) ; do echo -e "$(git rev-list --max-parents=0 $BR)  $BR" ; done | sed "s/  .*//" | sort | uniq'
 alias     ga="git add ."
 alias     gc="git commit -am "
 alias   gccc="git commit"
@@ -97,6 +96,9 @@ alias   gitr="git remote -v"
 alias gdif='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; git log -c $ST..$EN | less -NS "+/^commit .*|^diff --" "+&^commit .*|^diff --"'
 alias gdiff='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
 alias gdifp='echo "ST=${ST:=HEAD~20} EN=${EN:=HEAD} PTH=${PTH:=.gitignore}" ; read -p "ENTER_OK> " ; for SHA1 in $(git rev-list $ST..$EN -- $PTH) ; do echo $SHA1 ; git log $SHA1^..$SHA1 ; git diff $SHA1^ $SHA1 | head -n 1000 ; done | less -NS "+/^commit .*|^diff --"'
+# git history
+alias gitnopare='git rev-list --all --max-parents=0'
+alias gitchildof='git branch -v --contains '
 
 alias gsw=\
 'echo "You want to switch to branch \"$GSW\"" | grep -P "\".*\""; \
