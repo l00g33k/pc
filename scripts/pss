@@ -1,0 +1,5 @@
+if [[ -n "$1" ]] ; then
+    PS1="$PSONE[$1] $ "
+else
+    PS1="$PSONE"
+fi
