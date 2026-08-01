@@ -9,9 +9,9 @@ hi DiffChange   ctermfg=NONE        ctermbg=NONE
 hi DiffDelete   ctermfg=White       ctermbg=Red
 hi DiffText     ctermfg=Yellow      ctermbg=Magenta
 
-highlight DiffAdd    term=bold ctermfg=white ctermbg=Blue guibg=LightBlue
-highlight DiffChange term=bold ctermbg=225 guibg=LightMagenta
-highlight DiffDelete term=bold ctermfg=red ctermbg=159 gui=bold guifg=Blue guibg=LightCyan
+highlight DiffAdd    term=bold ctermfg=10 ctermbg=Blue guibg=LightBlue
+highlight DiffChange term=bold ctermbg=14 guibg=LightMagenta
+highlight DiffDelete term=bold ctermfg=1  ctermbg=159 gui=bold guifg=Blue guibg=LightCyan
 highlight DiffText   term=bold cterm=bold ctermfg=white ctermbg=red gui=bold guibg=Red
 
 " https://vim.fandom.com/wiki/Search_for_visually_selected_text#:~:text=Features,old_reg%2C%20old_regtype)

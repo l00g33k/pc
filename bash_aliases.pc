@@ -46,7 +46,8 @@ if [[ "$(uname)" == "Linux" ]]; then
         # termux: send to WikiPland clip.htm
         alias  gcd="echo \"http://localhost:20337/clip.htm?clip=$(pwd | sed 's/ /\\ /g')\""
     else
-        alias  gcd="pwd | tr '\n' ' ' | sed 's/ *$//' | xclip -sel clip"
+        alias  gcd="export DISPLAY=:1 ; pwd | tr '\n' ' ' | sed 's/ *$//' | xclip -sel clip"
+        alias gcdx='export DISPLAY=:1'
     fi
 else
     alias  gcd="pwd |  tee /dev/clipboard"
